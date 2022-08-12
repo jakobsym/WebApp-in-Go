@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -41,21 +42,26 @@ func loadPage(title string) (*Page, error) {
 	return &Page{Title: title, Body: body}, nil
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello, I love %s!", r.URL.Path[1:])
-}
-
 func viewHandler(w http.ResponseWriter, r *http.Request) {
 	title := r.URL.Path[len("/view/"):]
 	p, _ := loadPage(title)
 	fmt.Fprintf(w, "<h1>%s</h1><div>%s</div>", p.Title, p.Body)
 }
 
+func editHandler(w http.ResponseWriter, r *http.Request) {
+	title := r.URL.Path[len("/edit/"):]
+	p, err := loadPage(title)
+	if err != nil {
+		p = &Page{Title: title}
+	}
+	t, _ := template.ParseFiles("edit.html")
+	t.Execute(w, p)
+}
+
 func main() {
-	http.HandleFunc("/", handler)
+	http.HandleFunc("/view/", viewHandler) // VIEW
+	http.HandleFunc("/edit/", editHandler) // EDIT
+	//http.HandleFunc("/save/", saveHandler) // SAVE
 	log.Fatal((http.ListenAndServe(":8080", nil)))
-	/* p1 := &Page{Title: "TestPage", Body: []byte("Hello, TestPage!")}
-	p1.save()
-	p2, _ := loadPage("TestPage")
-	fmt.Println(string(p2.Body)) */
+
 }
