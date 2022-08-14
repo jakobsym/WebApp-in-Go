@@ -12,7 +12,6 @@ import (
 type Page struct {
 	Title string
 	Body  []byte // "a byte slice" expected by the io libraries we will use
-
 }
 
 /* This is a method named 'save' that takes as its receiver p, a pointer to Page . It takes no parameters, and returns a value of type error */
@@ -43,7 +42,11 @@ func loadPage(title string) (*Page, error) {
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
 	title := r.URL.Path[len("/view/"):]
-	p, _ := loadPage(title)
+	p, err := loadPage(title)
+	if err != nil {
+		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
+		return
+	}
 	renderTemplate(w, "view", p)
 	//fmt.Fprintf(w, "<h1>%s</h1><div>%s</div>", p.Title, p.Body)
 }
