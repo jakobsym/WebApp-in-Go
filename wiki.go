@@ -1,8 +1,8 @@
-/* Defining our data structure */
+/* To run ->  http://localhost:8080/view/ANewPage
+'ANewPage' can be replaced with whatever file name you may desire. */
 package main
 
 import (
-	"errors"
 	"html/template"
 	"log"
 	"net/http"
@@ -70,27 +70,28 @@ func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
 
+/* The function template.Must is a convenience wrapper that panics when passed a non-nil error value,
+and otherwise returns the *Template unaltered. A panic is appropriate here; if the templates can't be loaded the only sensible thing to do is exit the program.*/
+var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
+
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
 	err := templates.ExecuteTemplate(w, tmpl+".html", p)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	/* if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	err = t.Execute(w, p) */
 }
 
-func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
+/*func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
 	m := validPath.FindStringSubmatch(r.URL.Path)
 	if m == nil {
 		http.NotFound(w, r)
 		return "", errors.New("invalid Page Title")
 	}
 	return m[2], nil // title is located at m[2]
-}
+} */
+
+var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
 	/* Closure, because this func encloses values defined outside of it. In our case,
@@ -104,11 +105,6 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 		fn(w, r, m[2])
 	}
 }
-
-/* The function template.Must is a convenience wrapper that panics when passed a non-nil error value,
-and otherwise returns the *Template unaltered. A panic is appropriate here; if the templates can't be loaded the only sensible thing to do is exit the program.*/
-var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
-var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9+)$")
 
 func main() {
 	http.HandleFunc("/view/", makeHandler(viewHandler)) // VIEW
